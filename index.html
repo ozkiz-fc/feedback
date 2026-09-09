@@ -617,20 +617,50 @@ body {
   .ref-section { padding: 0 14px 48px; }
   .modal { padding: 0 16px calc(44px + env(safe-area-inset-bottom)); }
 }
-/* DESKTOP ENHANCEMENTS — revert mobile-only sizing */
+/* DESKTOP ENHANCEMENTS — 2x font sizes + wider layout */
 @media (min-width: 540px) {
+  /* wider content area */
+  .page-header-inner, .stats-inner, .main, .ref-section { max-width: 1200px; }
+  .filter-inner { max-width: 1200px; }
+
+  /* 2x typography */
+  .page-eyebrow { font-size: 13px; }
+  .page-title { font-size: clamp(32px, 4vw, 46px); }
+  .meta-row { font-size: 18px; }
+  .stat-num { font-size: 38px; }
+  .stat-label { font-size: 15px; }
+  .result-count { font-size: 16px; }
+  .card-request { font-size: 18px; }
+  .card-num { font-size: 16px; }
+  .tag { font-size: 14px; padding: 3px 8px; }
+  .status-badge { font-size: 14px; padding: 4px 12px; }
+  .detail-label { font-size: 14px; }
+  .detail-ans { font-size: 17px; }
+  .ans-preview-text { font-size: 16px; }
+  .ref-card-label { font-size: 14px; }
+  .modal-title { font-size: 22px; }
+  .modal-sub { font-size: 15px; }
+  .form-label { font-size: 13px; }
+  .toast { font-size: 16px; }
+
+  /* chip & inputs */
   .chip-row { flex-wrap: wrap; overflow-x: visible; }
-  .chip { padding: 5px 12px; min-height: unset; font-size: 13.5px; }
-  .card-header { padding: 14px 16px 12px; min-height: unset; }
-  .card-detail { padding: 13px 16px 15px 48px; }
-  .ref-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-  /* restore original form/button sizes */
-  .search-input { font-size: 15px; }
-  .form-input, .form-textarea, .form-select { font-size: 15px; }
-  .btn-save { padding: 12px; min-height: unset; font-size: 15px; }
-  .btn-cancel { padding: 12px 16px; min-height: unset; font-size: 15px; }
-  .btn-edit { padding: 6px 13px; min-height: unset; font-size: 13px; }
-  .edit-fab { padding: 11px 18px; min-height: unset; font-size: 14px; }
+  .chip { padding: 7px 16px; min-height: unset; font-size: 16px; }
+  .search-input { font-size: 18px; }
+  .form-input, .form-textarea, .form-select { font-size: 18px; padding: 11px 14px; }
+  .form-readonly { font-size: 17px; }
+
+  /* card layout */
+  .card-header { padding: 18px 20px 14px; min-height: unset; }
+  .card-detail { padding: 16px 20px 18px 56px; }
+  .ref-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .ref-img-thumb { width: 110px; height: 110px; }
+
+  /* buttons */
+  .btn-save { padding: 14px; min-height: unset; font-size: 18px; }
+  .btn-cancel { padding: 14px 20px; min-height: unset; font-size: 18px; }
+  .btn-edit { padding: 8px 16px; min-height: unset; font-size: 15px; }
+  .edit-fab { padding: 14px 22px; min-height: unset; font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .chevron, .chip, .edit-fab { transition: none; }
