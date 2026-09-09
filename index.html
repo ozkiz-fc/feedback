@@ -359,7 +359,7 @@ body {
 .detail-ans.empty { color: var(--text-3); font-style: italic; border-left-color: var(--border); }
 .ref-img-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-top: 10px;
 }
@@ -370,6 +370,23 @@ body {
   border-radius: 6px;
   border: 1px solid var(--border);
   cursor: pointer;
+}
+/* Always-visible card images on the right */
+.card-img-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.card-img-strip img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: block;
 }
 .detail-actions {
   display: flex;
@@ -655,6 +672,7 @@ body {
   .card-detail { padding: 16px 20px 18px 56px; }
   .ref-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .ref-img-thumb { width: 110px; height: 110px; }
+  .card-img-strip img { width: 80px; height: 80px; }
 
   /* buttons */
   .btn-save { padding: 14px; min-height: unset; font-size: 18px; }
@@ -888,9 +906,9 @@ function renderCards() {
     const hasAns = it.ans && it.ans.trim();
     const ansPreview = hasAns ? `<div class="card-ans-preview"><span class="ans-icon">💬</span><span class="ans-preview-text">${esc(it.ans)}</span></div>` : '';
 
-    // inline reference images
+    // inline reference images — always visible on right
     const itemImgs = IMG_MAP[String(it.id)] || [];
-    const thumbs = itemImgs.length ? `<div class="ref-img-row">${itemImgs.map(src=>`<img class="ref-img-thumb" src="${src}" onclick="openLightbox(this.src)">`).join('')}</div>` : '';
+    const imgStrip = itemImgs.length ? `<div class="card-img-strip" onclick="event.stopPropagation()">${itemImgs.map(src=>`<img src="${src}" onclick="openLightbox(this.src)" title="클릭하면 크게 보기">`).join('')}</div>` : '';
 
     return `<div class="card" id="card-${it.id}">
   <div class="card-header" onclick="toggleCard(${it.id})">
@@ -908,11 +926,11 @@ function renderCards() {
       <span class="status-badge ${badge}">${esc(it.status)}</span>
       <span class="chevron">▾</span>
     </div>
+    ${imgStrip}
   </div>
   <div class="card-detail">
     <div class="detail-label">답변 · 조치 내용</div>
     <div class="detail-ans ${hasAns?'':'empty'}">${hasAns?esc(it.ans):'아직 답변이 없습니다.'}</div>
-    ${thumbs}
     <div class="detail-actions">
       <button class="btn-edit" onclick="openEdit(${it.id})">✏️ 수정</button>
     </div>
