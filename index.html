@@ -890,6 +890,29 @@ let ITEMS = [
   {id:85,team:'SCM팀',cat:'재고/시스템',req:'반품 처리된 제품의 재고가 다시 살아나는 오류가 종종 있습니다. 점검해주세요.',ans:'전표상 제품이 0으로 처리되는 경우로 보이며, SCM팀에서 반품 입고 시 스캔 처리를 하고 있어 실제 미발송·오발송 가능성이 있습니다. 전표와 실재고 차이 발생 시 두세 번 더 확인 후 처리하고 있으니, 매장에도 재고를 한 번 더 확인해달라고 안내 부탁드립니다.',status:'검토중',deadline:''}
 ];
 
+// localStorage persistence: load saved ITEMS if available
+(function() {
+  try {
+    const saved = localStorage.getItem('feedbackItems');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === ITEMS.length) {
+        parsed.forEach((s, i) => {
+          if (s && s.id === ITEMS[i].id) {
+            ITEMS[i].deadline = s.deadline || '';
+            ITEMS[i].ans = s.ans || ITEMS[i].ans;
+            ITEMS[i].status = s.status || ITEMS[i].status;
+          }
+        });
+      }
+    }
+  } catch(e) {}
+})();
+
+function persistItems() {
+  try { localStorage.setItem('feedbackItems', JSON.stringify(ITEMS)); } catch(e) {}
+}
+
 const TEAMS = ['전체','제품디자인팀','FC팀','SCM팀'];
 const STATUSES = ['전체','진행중','검토중'];
 let filterTeam = '전체', filterStatus = '전체', searchQ = '';
@@ -998,6 +1021,7 @@ function startDeadlineEdit(id) {
   const save = () => {
     const val = inp.value.trim();
     if (it) it.deadline = val;
+    persistItems();
     renderCards();
     saveData();
   };
@@ -1036,6 +1060,7 @@ function saveItem() {
   ITEMS[idx].ans = document.getElementById('eAns').value;
   ITEMS[idx].status = document.getElementById('eSt').value;
   ITEMS[idx].deadline = document.getElementById('eDl').value;
+  persistItems();
   closeModal(); renderCards();
   const card = document.getElementById('card-'+editItemId);
   if (card) card.classList.add('open');
