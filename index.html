@@ -778,6 +778,9 @@ body {
 .td-field:hover { background:var(--surface-2); border-bottom-color:var(--border); }
 .td-field:focus { outline:none; background:var(--accent-light); border-bottom-color:var(--accent); }
 .td-field::placeholder { color:var(--text-3); font-size:11.5px; }
+.card-assignee-edit { font-size:12px; color:var(--text-3); margin-top:4px; padding:3px 7px; border-radius:5px; cursor:pointer; border:1.5px solid transparent; transition:all .15s; white-space:nowrap; text-align:right; }
+.card-assignee-edit:hover { background:var(--surface-2); border-color:var(--border); color:var(--text-2); }
+.card-assignee-edit.empty { color:var(--text-3); opacity:.6; font-size:11px; }
 </style>
 
 <header class="page-header">
@@ -1091,6 +1094,25 @@ function filtered() {
   });
 }
 
+function startAssigneeEdit(id) {
+  const it = ITEMS.find(i=>i.id===id); if (!it) return;
+  const el = document.getElementById('as-'+id); if (!el) return;
+  const cur = it.담당자 || '';
+  const inp = document.createElement('input');
+  inp.className = 'td-field'; inp.style.cssText='width:100%;font-size:12px;';
+  inp.value = cur; inp.placeholder = '담당자 이름';
+  el.innerHTML = ''; el.appendChild(inp); inp.focus(); inp.select();
+  const save = () => {
+    const val = inp.value.trim();
+    if (it) it.담당자 = val;
+    persistItems();
+    renderView();
+    saveData();
+  };
+  inp.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); save(); } if (e.key==='Escape') { renderView(); } });
+  inp.addEventListener('blur', save);
+}
+
 function renderCards() {
   const items = filtered();
   document.getElementById('resultCount').innerHTML = `<strong>${items.length}건</strong> 표시 중 (전체 ${ITEMS.length}건)`;
@@ -1114,6 +1136,8 @@ function renderCards() {
 
     const dlClass = it.deadline ? 'card-deadline' : 'card-deadline empty';
     const dlLabel = it.deadline ? `📅 ${esc(it.deadline)}` : '📅 마감일';
+    const asClass = it.담당자 ? 'card-assignee-edit' : 'card-assignee-edit empty';
+    const asLabel = it.담당자 ? '👤 ' + esc(it.담당자) : '담당자 없음';;
 
     return `<div class="card" id="card-${it.id}">
   <div class="card-header" onclick="toggleCard(${it.id})">
@@ -1127,10 +1151,11 @@ function renderCards() {
       ${ansPreview}
     </div>
     <div class="card-right">
-      <span class="status-badge ${badge}">${esc(it.status)}</span><span class="card-assignee">${esc(it.담당자||'')}</span>
+      <span class="status-badge ${badge}">${esc(it.status)}</span>
       <div class="${dlClass}" id="dl-${it.id}" onclick="event.stopPropagation(); startDeadlineEdit(${it.id})" title="클릭하여 마감일 수정">${dlLabel}</div>
       <span class="chevron">▾</span>
     </div>
+    <div class="${asClass}" id="as-${it.id}" onclick="event.stopPropagation(); startAssigneeEdit(${it.id})" title="담당자 클릭하여 수정">${asLabel}</div>
     ${imgStrip}
   </div>
   <div class="card-detail">
