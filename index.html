@@ -1100,11 +1100,17 @@ function renderView() {
 }
 
 function updateStats() {
-  document.getElementById('stat-total').textContent = ITEMS.length;
-  document.getElementById('stat-ongoing').textContent = ITEMS.filter(i=>i.status==='진행중').length;
-  document.getElementById('stat-review').textContent = ITEMS.filter(i=>i.status==='검토중').length;
-  document.getElementById('stat-done').textContent = ITEMS.filter(i=>i.status==='완료').length;
-  document.getElementById('stat-blocked').textContent = ITEMS.filter(i=>i.status==='진행불가').length;
+  const total = ITEMS.length;
+  const ongoing = ITEMS.filter(i=>i.status==='진행중').length;
+  const review = ITEMS.filter(i=>i.status==='검토중').length;
+  const done = ITEMS.filter(i=>i.status==='완료').length;
+  const blocked = ITEMS.filter(i=>i.status==='진행불가').length;
+  const el = id => document.getElementById(id);
+  if(el('stat-total')) el('stat-total').textContent = total;
+  if(el('stat-ongoing')) el('stat-ongoing').textContent = ongoing;
+  if(el('stat-review')) el('stat-review').textContent = review;
+  if(el('stat-done')) el('stat-done').textContent = done;
+  if(el('stat-blocked')) el('stat-blocked').textContent = blocked;
 }
 
 function renderTable() {
@@ -1403,35 +1409,40 @@ function setupGhToken() {
 
 function renderBoard() {
   const items = filtered();
-  document.getElementById('resultCount').innerHTML = `<strong>${items.length}건</strong> 표시 중 (전체 ${ITEMS.length}건)`;
+  document.getElementById('resultCount').innerHTML = `<strong>${items.length}</strong>건 표시 중 (전체 ${ITEMS.length}건)`;
   updateStats();
   const bv = document.getElementById('boardView');
+  if (!bv) return;
   const COLS = [
-    { key: '검토중', cls: 'board-col-review', badge: 'status-review' },
-    { key: '진행중', cls: 'board-col-ongoing', badge: 'status-ongoing' },
-    { key: '완료',   cls: 'board-col-done',    badge: 'status-done' },
-    { key: '진행불가', cls: 'board-col-blocked', badge: 'status-blocked' },
+    { key: '검토중', label: '검토중', cls: 'board-col-review' },
+    { key: '진행중', label: '진행중', cls: 'board-col-ongoing' },
+    { key: '완료',   label: '완료',   cls: 'board-col-done' },
+    { key: '진행불가', label: '진행불가', cls: 'board-col-blocked' }
   ];
   bv.innerHTML = COLS.map(col => {
-    const colItems = items.filter(i => i.status === col.key);
-    const cards = colItems.length
-      ? colItems.map(it => {
-          const imgs = (typeof IMG_MAP !== 'undefined' && IMG_MAP[String(it.id)]) || [];
-          const imgDot = imgs.length ? `<span title="이미지 ${imgs.length}개">📷</span>` : '';
-          const dl = it.deadline ? `<span>📅 ${esc(it.deadline)}</span>` : '';
-          const as = it.담당자 ? `<span>👤 ${esc(it.담당자)}</span>` : '';
-          return `<div class="board-card" onclick="openEdit(${it.id})">
-  <div class="board-card-id">#${it.id}</div>
-  <div class="board-card-tags"><span class="tag">${esc(it.team)}</span><span class="tag">${esc(it.cat)}</span></div>
-  <div class="board-card-req">${esc(it.req)}</div>
-  <div class="board-card-meta">${dl}${as}${imgDot}</div>
-</div>`;
-        }).join('')
-      : '<div class="board-col-empty">항목 없음</div>';
+    const colItems = items.filter(it => it.status === col.key);
+    const cards = colItems.map(it => {
+      const metaSpans = [
+        it['담당자'] ? `<span>👤 ${it['담당자']}</span>` : '',
+        it.deadline ? `<span>📅 ${it.deadline}</span>` : ''
+      ].filter(Boolean).join('');
+      const meta = metaSpans ? `<div class="board-card-meta">${metaSpans}</div>` : '';
+      return `<div class="board-card" onclick="openDetail(${it.id})">
+        <div class="board-card-tags">
+          <span class="tag">${it.team||''}</span>
+          <span class="tag">${it.cat||''}</span>
+        </div>
+        <div class="board-card-req">${it.req||''}</div>
+        ${meta}
+      </div>`;
+    }).join('');
     return `<div class="board-col ${col.cls}">
-  <div class="board-col-header"><span>${col.key}</span><span class="col-badge status-badge ${col.badge}">${colItems.length}</span></div>
-  <div class="board-col-body">${cards}</div>
-</div>`;
+      <div class="board-col-header">
+        <span>${col.label}</span>
+        <span class="col-badge">${colItems.length}</span>
+      </div>
+      <div class="board-col-body">${cards || '<div class="board-col-empty">항목 없음</div>'}</div>
+    </div>`;
   }).join('');
 }
 
