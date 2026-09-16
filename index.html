@@ -756,6 +756,10 @@ body {
   .chip { min-height: 40px; }
   .view-btn { min-height: 36px; padding: 5px 8px; font-size: 12px; gap: 2px; }
 
+  /* Filter chip rows */
+  .filter-chip-row { gap: 6px; }
+  .filter-label { font-size: 10px; min-width: 44px; }
+
   /* Card */
   .card-header { padding: 11px 14px 9px; }
   .card-detail { padding: 10px 14px 12px; }
@@ -917,8 +921,23 @@ body {
 }
 
 
-/* VIEW TOGGLE */
-.filter-top-row { display:flex; align-items:center; gap:8px; }
+/* VIEW TOGGLE + FILTER ROWS */
+.filter-search-row { display:flex; align-items:center; justify-content:flex-end; margin-bottom:4px; }
+.filter-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+  min-width: 52px;
+}
 .view-toggle { display:flex; gap:4px; flex-shrink:0; }
 .view-btn {
   padding:5px 11px; border-radius:6px; font-size:12.5px; font-weight:500;
@@ -1004,13 +1023,20 @@ body {
       <span class="search-icon">🔍</span>
       <input class="search-input" type="search" placeholder="요청사항 또는 답변 검색..." id="searchInput" autocomplete="off">
     </div>
-    <div class="filter-top-row">
-      <div class="chip-row" id="chipRow" style="flex:1;min-width:0;"></div>
+    <div class="filter-search-row">
       <div class="view-toggle">
+        <button class="view-btn" id="viewBoard" onclick="setView('board')" title="보드 보기">⬛ <span class="view-btn-label">보드</span></button>
         <button class="view-btn active" id="viewCard" onclick="setView('card')" title="카드 보기">☰ <span class="view-btn-label">카드</span></button>
         <button class="view-btn" id="viewTable" onclick="setView('table')" title="표 보기">⊞ <span class="view-btn-label">표</span></button>
-        <button class="view-btn" id="viewBoard" onclick="setView('board')" title="보드 보기">⬛ <span class="view-btn-label">보드</span></button>
       </div>
+    </div>
+    <div class="filter-chip-row">
+      <span class="filter-label">담당팀</span>
+      <div class="chip-row" id="teamRow"></div>
+    </div>
+    <div class="filter-chip-row">
+      <span class="filter-label">진행상황</span>
+      <div class="chip-row" id="statusRow"></div>
     </div>
   </div>
 </div>
@@ -1299,24 +1325,27 @@ function saveTableField(el) {
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function buildChips() {
-  const cr = document.getElementById('chipRow');
-  cr.innerHTML = '';
-  TEAMS.forEach(t => {
-    const b = document.createElement('button');
-    b.className = 'chip' + (filterTeam===t?' active':'');
-    b.textContent = t; b.onclick = () => { filterTeam=t; buildChips(); renderView(); };
-    cr.appendChild(b);
-  });
-  const sep = document.createElement('span');
-  sep.style.cssText = 'width:1px;height:18px;background:var(--border);align-self:center;flex-shrink:0;';
-  cr.appendChild(sep);
-  STATUSES.forEach(s => {
-    const b = document.createElement('button');
-    const cls = s==='진행중'?' ongoing':s==='검토중'?' review':s==='완료'?' done':s==='진행불가'?' blocked':'';
-    b.className = 'chip'+cls+(filterStatus===s?' active':'');
-    b.textContent = s; b.onclick = () => { filterStatus=s; buildChips(); renderView(); };
-    cr.appendChild(b);
-  });
+  const teamRow = document.getElementById('teamRow');
+  const statusRow = document.getElementById('statusRow');
+  if (teamRow) {
+    teamRow.innerHTML = '';
+    TEAMS.forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (filterTeam===t?' active':'');
+      b.textContent = t; b.onclick = () => { filterTeam=t; buildChips(); renderView(); };
+      teamRow.appendChild(b);
+    });
+  }
+  if (statusRow) {
+    statusRow.innerHTML = '';
+    STATUSES.forEach(s => {
+      const b = document.createElement('button');
+      const cls = s==='진행중'?' ongoing':s==='검토중'?' review':s==='완료'?' done':s==='진행불가'?' blocked':'';
+      b.className = 'chip'+cls+(filterStatus===s?' active':'');
+      b.textContent = s; b.onclick = () => { filterStatus=s; buildChips(); renderView(); };
+      statusRow.appendChild(b);
+    });
+  }
 }
 
 function filtered() {
