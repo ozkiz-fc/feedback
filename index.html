@@ -839,6 +839,84 @@ body {
   .chevron, .chip, .edit-fab { transition: none; }
 }
 
+/* ── STATUS PICKER POPOVER ───────────────────────── */
+.status-badge { cursor: pointer; transition: opacity .12s; }
+.status-badge:hover { opacity: .82; }
+.status-picker {
+  position: fixed;
+  z-index: 9000;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.28);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 130px;
+}
+.status-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Noto Sans KR', sans-serif;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: background .1s;
+  color: var(--text);
+}
+.status-picker-item:hover { background: var(--surface-2); }
+.status-picker-item.active { background: var(--surface-2); }
+.status-picker-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── PC BOARD CENTERING (≥1140px) ──────────────── */
+@media (min-width: 1140px) {
+  .board-wrap {
+    justify-content: center;
+    overflow-x: visible;
+  }
+}
+
+/* ── WIDE SCREEN OPTIMIZATIONS (≥1000px) ─────────── */
+@media (min-width: 1000px) {
+  /* Card view: 2-column grid */
+  #cardList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  #cardList .card { margin-bottom: 0; }
+
+  /* Stat bar: more breathing room */
+  .stat-cell { padding: 16px 0; }
+  .stat-num { font-size: 32px; }
+  .stat-label { font-size: 12px; }
+
+  /* Board: slightly wider columns */
+  .board-col { flex: 0 0 280px; }
+
+  /* Main max-width for board */
+  .main.board-mode { padding-left: 24px; padding-right: 24px; }
+}
+
+/* ── ULTRA-WIDE (≥1400px) ────────────────────────── */
+@media (min-width: 1400px) {
+  .board-col { flex: 0 0 300px; }
+  .main:not(.board-mode) { max-width: 1100px; }
+}
+
+
 /* VIEW TOGGLE */
 .filter-top-row { display:flex; align-items:center; gap:8px; }
 .view-toggle { display:flex; gap:4px; flex-shrink:0; }
@@ -1194,7 +1272,7 @@ function renderTable() {
       <td class="td-req" title="${esc(it.req)}"><div class="td-req-text">${esc(shortReq)}</div></td>
       <td class="td-assignee"><input class="td-field" value="${esc(it.담당자||'')}" placeholder="담당자" data-id="${it.id}" data-f="담당자" onblur="saveTableField(this)" onkeydown="if(event.key==='Enter')this.blur()"></td>
       <td class="td-deadline"><input class="td-field" value="${esc(it.deadline||'')}" placeholder="마감일" data-id="${it.id}" data-f="deadline" onblur="saveTableField(this)" onkeydown="if(event.key==='Enter')this.blur()"></td>
-      <td class="td-status"><span class="status-badge ${badge}">${esc(it.status)}</span></td>
+      <td class="td-status"><span class="status-badge ${badge}" role="button" onclick="event.stopPropagation();openStatusPicker(event,${it.id})" title="상태 변경">${esc(it.status)}</span></td>
       <td class="td-img">${imgCell}</td>
     </tr>`;
   }).join('');
@@ -1304,7 +1382,7 @@ function renderCards() {
       ${ansPreview}
     </div>
     <div class="card-right">
-      <span class="status-badge ${badge}">${esc(it.status)}</span>
+      <span class="status-badge ${badge}" role="button" onclick="event.stopPropagation();openStatusPicker(event,${it.id})" title="상태 변경">${esc(it.status)}</span>
       <div class="${dlClass}" id="dl-${it.id}" onclick="event.stopPropagation(); startDeadlineEdit(${it.id})" title="클릭하여 마감일 수정">${dlLabel}</div>
       <div class="${asClass}" id="as-${it.id}" onclick="event.stopPropagation(); startAssigneeEdit(${it.id})" title="담당자 클릭하여 수정">${asLabel}</div>
       <span class="chevron">▾</span>
@@ -1508,4 +1586,51 @@ document.getElementById('modalOverlay').addEventListener('click', e=>{ if (e.tar
 
 buildChips();
 renderCards();
+
+
+// ── STATUS PICKER ──────────────────────────────────
+let _pickerEl = null;
+function closeStatusPicker() {
+  if (_pickerEl) { _pickerEl.remove(); _pickerEl = null; }
+}
+function openStatusPicker(event, id) {
+  event.stopPropagation();
+  closeStatusPicker();
+  const it = ITEMS.find(x => x.id === id);
+  if (!it) return;
+  const STATUS_OPTS = [
+    { key: '검토중',  color: 'var(--review-bg)',  fg: 'var(--review-fg)' },
+    { key: '진행중',  color: 'var(--ongoing-bg)', fg: 'var(--ongoing-fg)' },
+    { key: '완료',    color: 'rgba(107,203,141,.2)', fg: '#6bcb8d' },
+    { key: '진행불가', color: 'rgba(255,138,138,.2)', fg: '#ff8a8a' }
+  ];
+  const picker = document.createElement('div');
+  picker.className = 'status-picker';
+  picker.innerHTML = STATUS_OPTS.map(s =>
+    `<button class="status-picker-item${it.status===s.key?' active':''}" onclick="changeStatus(${id},'${s.key}')">
+      <span class="status-picker-dot" style="background:${s.fg}"></span>
+      ${s.key}
+    </button>`
+  ).join('');
+  document.body.appendChild(picker);
+  _pickerEl = picker;
+
+  // Position near click point, keep in viewport
+  const rect = event.target.getBoundingClientRect();
+  const pw = picker.offsetWidth || 140, ph = picker.offsetHeight || 170;
+  let top = rect.bottom + 6, left = rect.left;
+  if (top + ph > window.innerHeight - 10) top = rect.top - ph - 6;
+  if (left + pw > window.innerWidth - 10) left = window.innerWidth - pw - 10;
+  picker.style.top = top + 'px';
+  picker.style.left = left + 'px';
+  setTimeout(() => document.addEventListener('click', closeStatusPicker, {once:true}), 0);
+}
+function changeStatus(id, newStatus) {
+  closeStatusPicker();
+  const it = ITEMS.find(x => x.id === id);
+  if (!it || it.status === newStatus) return;
+  it.status = newStatus;
+  markUnsaved();
+  renderView();
+}
 </script>
