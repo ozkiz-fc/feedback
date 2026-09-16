@@ -1043,8 +1043,8 @@ body {
     </div>
     <div class="filter-search-row">
       <div class="view-toggle">
-        <button class="view-btn active" id="viewBoard" onclick="setView('board')" title="보드 보기">⬛ <span class="view-btn-label">보드</span></button>
-        <button class="view-btn" id="viewCard" onclick="setView('card')" title="카드 보기">☰ <span class="view-btn-label">카드</span></button>
+        <button class="view-btn" id="viewBoard" onclick="setView('board')" title="보드 보기">⬛ <span class="view-btn-label">보드</span></button>
+        <button class="view-btn active" id="viewCard" onclick="setView('card')" title="카드 보기">☰ <span class="view-btn-label">카드</span></button>
         <button class="view-btn" id="viewTable" onclick="setView('table')" title="표 보기">⊞ <span class="view-btn-label">표</span></button>
       </div>
     </div>
@@ -1058,9 +1058,9 @@ body {
     </div>
   </div>
 </div>
-<main class="main board-mode">
-  <p class="result-count" id="resultCount"><strong>85</strong>건 표시 중 (전체 85건)</p>
-  <div id="cardList" style="display: none;"><div class="card" id="card-1">
+<main class="main">
+  <p class="result-count" id="resultCount"><strong>85건</strong> 표시 중 (전체 85건)</p>
+  <div id="cardList" style=""><div class="card" id="card-1">
   <div class="card-header" onclick="toggleCard(1)">
     <span class="card-num">1</span>
     <div class="card-body-text">
@@ -3274,7 +3274,7 @@ body {
   </div>
 </div></div>
   <div id="tableView" class="table-wrap" style="display:none;"></div>
-  <div id="boardView" class="board-wrap" style=""><div class="board-col board-col-review">
+  <div id="boardView" class="board-wrap" style="display: none;"><div class="board-col board-col-review">
       <div class="board-col-header">
         <span>검토중</span>
         <span class="col-badge">30</span>
