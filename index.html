@@ -287,6 +287,8 @@ body {
   cursor: pointer; outline: none; width: 130px;
 }
 .td-deadline input[type="date"]:focus { border-color: var(--accent); }
+.board-meta-edit { cursor: pointer; border-radius: 5px; padding: 2px 5px; transition: background .15s; }
+.board-meta-edit:hover { background: var(--accent-light); color: var(--accent); }
 .board-card-req { font-size: 12.5px; color: var(--text-1); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .board-card-meta { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .board-card-meta span { font-size: 10.5px; color: var(--text-3); }
@@ -3475,7 +3477,7 @@ function renderTable() {
       <td class="td-cat"><span class="tag">${esc(it.cat)}</span></td>
       <td class="td-req" title="${esc(it.req)}"><div class="td-req-text">${esc(shortReq)}</div></td>
       <td class="td-assignee"><input class="td-field" value="${esc(it.담당자||'')}" placeholder="담당자" data-id="${it.id}" data-f="담당자" onblur="saveTableField(this)" onkeydown="if(event.key==='Enter')this.blur()"></td>
-      <td class="td-deadline"><input class="td-field" type="date" value="${_displayToIso(it.deadline||'')}" data-id="${it.id}" data-f="deadline" onchange="this.blur()" onblur="saveTableField(this)"></td>
+      <td class="td-deadline"><input class="td-field" type="date" value="${_displayToIso(it.deadline||'')}" data-id="${it.id}" data-f="deadline" onclick="this.showPicker&&this.showPicker()" onchange="this.blur()" onblur="saveTableField(this)"></td>
       <td class="td-status"><span class="status-badge ${badge}" role="button" onclick="event.stopPropagation();openStatusPicker(event,${it.id})" title="상태 변경">${esc(it.status)}</span></td>
       <td class="td-img">${imgCell}</td>
     </tr>`;
@@ -3809,6 +3811,62 @@ function boardDrop(e, col) {
   if(!it || it.status===col) { _dragId=null; return; }
   it.status=col; markUnsaved(); renderBoard(); _dragId=null;
 }
+// ── BOARD CARD INLINE EDITING ──
+function boardEditAssignee(id, spanEl) {
+  if (spanEl.querySelector('input')) return;
+  const it = ITEMS.find(i => i.id === id);
+  if (!it) return;
+  const cur = it['담당자'] || '';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = cur;
+  inp.placeholder = '담당자 입력';
+  inp.className = 'deadline-input';
+  inp.style.width = '90px';
+  spanEl.innerHTML = '👤 ';
+  spanEl.appendChild(inp);
+  inp.focus();
+  inp.select();
+  const save = () => {
+    const val = inp.value.trim();
+    it['담당자'] = val;
+    markUnsaved();
+    renderBoard();
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { inp.blur(); }
+    if (e.key === 'Escape') renderBoard();
+    e.stopPropagation();
+  });
+  inp.addEventListener('blur', save);
+  inp.addEventListener('click', e => e.stopPropagation());
+}
+function boardEditDl(id, spanEl) {
+  if (spanEl.querySelector('input')) return;
+  const it = ITEMS.find(i => i.id === id);
+  if (!it) return;
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'deadline-input';
+  inp.value = _displayToIso(it.deadline || '');
+  spanEl.innerHTML = '📅 ';
+  spanEl.appendChild(inp);
+  inp.focus();
+  inp.showPicker && inp.showPicker();
+  const save = () => {
+    it.deadline = inp.value ? _dateToDisplay(inp.value) : '';
+    markUnsaved();
+    renderBoard();
+  };
+  inp.addEventListener('change', save);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Escape') renderBoard();
+    e.stopPropagation();
+  });
+  inp.addEventListener('blur', () => setTimeout(save, 150));
+  inp.addEventListener('click', e => e.stopPropagation());
+}
+
 document.getElementById('editFab').onclick = () => openEdit(ITEMS[0].id);
 document.getElementById('searchInput').addEventListener('input', e=>{ searchQ=e.target.value.trim(); renderView(); });
 document.getElementById('modalOverlay').addEventListener('click', e=>{ if (e.target===document.getElementById('modalOverlay')) closeModal(); });
