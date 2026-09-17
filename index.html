@@ -3688,6 +3688,9 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
+// Auto-setup: visit with #setup=TOKEN to save token
+(function(){try{const m=location.hash.match(/[#&]setup=([^&\s]+)/);if(m&&m[1]){localStorage.setItem('_ghToken',decodeURIComponent(m[1]));history.replaceState(null,'',location.pathname+location.search);}}catch(e){}}());
+
 // GitHub Pages: download updated HTML after editing
 async function tryPublish(silent) {
   const token = (function(){ try { return localStorage.getItem('_ghToken'); } catch(e){ return null; } })();
