@@ -2,6 +2,7 @@
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>매니저 품평회 피드백 반영현황</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&amp;display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg: #F5F7FB;
@@ -3306,7 +3307,7 @@ body {
   <img id="lightboxImg" src="" alt="">
 </div>
 
-<button id="tokenBtn" onclick="setupGhToken()" title="GitHub 토큰 설정" style="position:fixed;bottom:72px;right:20px;z-index:1000;background:var(--surface);border:1.5px solid var(--border);color:var(--text-2);border-radius:50px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:var(--shadow);">🔑</button>
+
 <button class="edit-fab" id="editFab">✏️ 수정하기</button>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -3357,22 +3358,28 @@ let ITEMS = [{"id":1,"team":"제품디자인팀","cat":"장화","req":"생고무
   } catch(e) {}
 })();
 
-function persistItems() {
-  try { localStorage.setItem('feedbackItems', JSON.stringify(ITEMS)); } catch(e) {}
+// ── Supabase 클라이언트 ──
+const _SB = window.supabase.createClient('https://jrnfwiozvetdwwqnhmde.supabase.co','sb_publishable_FqBkJmMf39zLprrvV6B0Bg_HBC5X9et');
+
+function persistItems(){try{localStorage.setItem('feedbackItems',JSON.stringify(ITEMS));}catch(e){}}
+function persistImgs(){try{localStorage.setItem('feedbackImgs',JSON.stringify(IMG_MAP));}catch(e){}}
+
+let _autoSaveTimer=null,_sbSaving=false;
+async function saveToSupabase(){
+  if(_sbSaving)return; _sbSaving=true;
+  try{
+    const{error}=await _SB.from('feedback_store').upsert({id:'main',items:ITEMS,imgs:IMG_MAP,updated_at:new Date().toISOString()}).eq('id','main');
+    if(error)throw error;
+    showToast('자동 저장됨 ✓',1500);
+  }catch(e){showToast('저장 실패: '+e.message,3000);}
+  finally{_sbSaving=false;}
 }
-function persistImgs() {
-  try { localStorage.setItem('feedbackImgs', JSON.stringify(IMG_MAP)); } catch(e) {}
+function markUnsaved(){
+  persistItems();persistImgs();
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer=setTimeout(saveToSupabase,2000);
 }
 
-let _autoSaveTimer = null;
-function markUnsaved() {
-  persistItems();
-  persistImgs();
-  clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(() => {
-    tryPublish(true);
-  }, 3000);
-}
 
 const TEAMS = ['전체','제품디자인팀','FC팀','SCM팀'];
 const STATUSES = ['전체','진행중','검토중','완료','진행불가'];
@@ -3669,7 +3676,7 @@ function saveItem() {
     if (card) card.classList.add('open');
   }
   showToast('저장되었습니다.');
-  tryPublish();
+  saveToSupabase();
 }
 
 function showToast(msg, duration=2200) {
@@ -3691,68 +3698,16 @@ function closeLightbox() {
 // Auto-setup: visit with #setup=TOKEN to save token
 (function(){try{const m=location.hash.match(/[#&]setup=([^&\s]+)/);if(m&&m[1]){localStorage.setItem('_ghToken',decodeURIComponent(m[1]));history.replaceState(null,'',location.pathname+location.search);}}catch(e){}}());
 
-// GitHub Pages: download updated HTML after editing
-async function tryPublish(silent) {
-  const token = (function(){ try { return localStorage.getItem('_ghToken'); } catch(e){ return null; } })();
-  function buildUpdatedHtml() {
-    const dataStr = JSON.stringify(ITEMS);
-    const imgStr = JSON.stringify(IMG_MAP);
-    return '<!DOCTYPE html>\n' + document.documentElement.outerHTML
-      .replace(/let ITEMS = \[[\s\S]*?\];/, 'let ITEMS = ' + dataStr + ';')
-      .replace(/\/\*__IMG_MAP__\*\/[\s\S]*?\/\*__IMG_MAP_END__\*\//, '/*__IMG_MAP__*/' + imgStr + '/*__IMG_MAP_END__*/');
-  }
-  if (!token) {
-    const updatedHtml = buildUpdatedHtml();
-    const blob = new Blob([updatedHtml], {type: 'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'index.html';
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a); URL.revokeObjectURL(url);
-    if (!silent) showToast('index.html 다운로드 완료 — GitHub에 업로드해 주세요 ✓', 4000);
-    return;
-  }
-  const apiUrl = 'https://api.github.com/repos/ozkiz-fc/feedback/contents/index.html';
-  try {
-    if (!silent) showToast('GitHub에 저장 중…', 2000);
-    const resp = await fetch(apiUrl, { headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' } });
-    if (!resp.ok) throw new Error('SHA 조회 실패 (' + resp.status + ')');
-    const data = await resp.json();
-    const sha = data.sha;
-    const updatedHtml = buildUpdatedHtml();
-    const bytes = new TextEncoder().encode(updatedHtml);
-    let bin = '';
-    bytes.forEach(b => bin += String.fromCharCode(b));
-    const encoded = btoa(bin);
-    const putResp = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: '\ud53c\ub4dc\ubc31 \ub370\uc774\ud130 \uc5c5\ub370\uc774\ud2b8', content: encoded, sha: sha })
-    });
-    if (!putResp.ok) {
-      const err = await putResp.json();
-      throw new Error(err.message || putResp.status);
-    }
-    if (!silent) showToast('GitHub\uc5d0 \uc800\uc7a5\ub418\uc5c8\uc5b4\uc694 \u2713', 3000);
-    else showToast('\uc790\ub3d9 \uc800\uc7a5\ub428 \u2713', 2000);
-  } catch(e) {
-    showToast('\uc800\uc7a5 \uc2e4\ud328: ' + e.message, 5000);
-  }
-}
-
-function setupGhToken() {
-  const cur = (function(){ try { return localStorage.getItem('_ghToken') || ''; } catch(e){ return ''; } })();
-  const t = prompt('GitHub Personal Access Token', cur ? '****\uc774\ubbf8 \uc124\uc815\ub428****' : '');
-  if (t === null) return;
-  if (t && t !== '****\uc774\ubbf8 \uc124\uc815\ub428****') {
-    try { localStorage.setItem('_ghToken', t); } catch(e) {}
-    showToast('\ud1a0\ud070\uc774 \uc800\uc7a5\ub418\uc5c8\uc5b4\uc694 \u2713', 2500);
-  } else if (t === '') {
-    try { localStorage.removeItem('_ghToken'); } catch(e) {}
-    showToast('\ud1a0\ud070\uc774 \uc0ad\uc81c\ub418\uc5c8\uc5b4\uc694', 2500);
-  }
-}
-
+// ── Supabase 로드 ──
+(async function loadFromSupabase(){
+  try{
+    const{data,error}=await _SB.from('feedback_store').select('items,imgs').eq('id','main').single();
+    if(error)throw error;
+    if(data&&data.items&&data.items.length>0){ITEMS=data.items;persistItems();}
+    if(data&&data.imgs&&typeof data.imgs==='object'){IMG_MAP=data.imgs;persistImgs();}
+    renderView();
+  }catch(e){console.warn('Supabase load failed:',e.message);}
+})()
 function renderBoard() {
   const items = filtered();
   document.getElementById('resultCount').innerHTML = `<strong>${items.length}</strong>건 표시 중 (전체 ${ITEMS.length}건)`;
