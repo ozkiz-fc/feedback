@@ -3401,7 +3401,7 @@ const TEAMS = ['전체','제품디자인팀','FC팀','SCM팀'];
 const STATUSES = ['전체','진행중','검토중','완료','진행불가'];
 let filterTeam = '전체', filterStatus = '전체', searchQ = '';
 let editItemId = null;
-let viewMode = 'card';
+let viewMode = 'board';
 
 function setView(mode) {
   viewMode = mode;
@@ -3814,7 +3814,7 @@ document.getElementById('searchInput').addEventListener('input', e=>{ searchQ=e.
 document.getElementById('modalOverlay').addEventListener('click', e=>{ if (e.target===document.getElementById('modalOverlay')) closeModal(); });
 
 buildChips();
-renderCards();
+setView('board');
 
 
 // ── STATUS PICKER ──────────────────────────────────
