@@ -3758,18 +3758,18 @@ function renderBoard() {
   bv.innerHTML = COLS.map(col => {
     const colItems = items.filter(it => it.status === col.key);
     const cards = colItems.map(it => {
-      const metaSpans = [
-        it['담당자'] ? `<span>👤 ${it['담당자']}</span>` : '',
-        it.deadline ? `<span>📅 ${it.deadline}</span>` : ''
-      ].filter(Boolean).join('');
-      const meta = metaSpans ? `<div class="board-card-meta">${metaSpans}</div>` : '';
+      const assignee = it['담당자'] || '미지정';
+      const dl = it.deadline || '-';
       return `<div class="board-card" draggable="true" data-id="${it.id}" ondragstart="boardDragStart(event,${it.id})" ondragend="boardDragEnd(event)" onclick="openDetail(${it.id})">
         <div class="board-card-tags">
           <span class="tag">${it.team||''}</span>
           <span class="tag">${it.cat||''}</span>
         </div>
         <div class="board-card-req">${it.req||''}</div>
-        ${meta}
+        <div class="board-card-meta">
+          <span>👤 ${assignee}</span>
+          <span>📅 ${dl}</span>
+        </div>
       </div>`;
     }).join('');
     return `<div class="board-col ${col.cls}">
