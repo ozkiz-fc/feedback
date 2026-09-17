@@ -3769,8 +3769,8 @@ function renderBoard() {
         </div>
         <div class="board-card-req">${it.req||''}</div>
         <div class="board-card-meta">
-          <span>👤 ${assignee}</span>
-          <span>📅 ${dl}</span>
+          <span class="board-meta-edit" onclick="event.stopPropagation();boardEditAssignee(${it.id},this)">👤 ${assignee}</span>
+          <span class="board-meta-edit" onclick="event.stopPropagation();boardEditDl(${it.id},this)">📅 ${dl}</span>
         </div>
       </div>`;
     }).join('');
