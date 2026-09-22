@@ -289,6 +289,12 @@ body {
 .td-deadline input[type="date"]:focus { border-color: var(--accent); }
 .board-meta-edit { cursor: pointer; border-radius: 5px; padding: 2px 5px; transition: background .15s; }
 .board-meta-edit:hover { background: var(--accent-light); color: var(--accent); }
+.board-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.btn-delete-board { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-3); padding: 0 2px; line-height: 1; border-radius: 4px; transition: color .15s, background .15s; opacity: 0; }
+.board-card:hover .btn-delete-board { opacity: 1; }
+.btn-delete-board:hover { color: #ff5a5a; background: rgba(255,90,90,.1); }
+.btn-delete-card { background: none; border: 1px solid #ff8a8a; color: #ff5a5a; border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; transition: background .15s; }
+.btn-delete-card:hover { background: rgba(255,90,90,.1); }
 .board-card-req { font-size: 12.5px; color: var(--text-1); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .board-card-meta { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 .board-card-meta span { font-size: 10.5px; color: var(--text-3); }
@@ -3605,6 +3611,7 @@ function renderCards() {
     <div class="detail-ans ${hasAns?'':'empty'}">${hasAns?esc(it.ans):'아직 답변이 없습니다.'}</div>
     <div class="detail-actions">
       <button class="btn-edit" onclick="openEdit(${it.id})">✏️ 수정</button>
+      <button class="btn-delete-card" onclick="deleteItem(${it.id})">🗑️ 삭제</button>
     </div>
   </div>
 </div>`;
@@ -3763,9 +3770,12 @@ function renderBoard() {
       const assignee = it['담당자'] || '미지정';
       const dl = it.deadline || '-';
       return `<div class="board-card" draggable="true" data-id="${it.id}" ondragstart="boardDragStart(event,${it.id})" ondragend="boardDragEnd(event)" onclick="openDetail(${it.id})">
-        <div class="board-card-tags">
-          <span class="tag">${it.team||''}</span>
-          <span class="tag">${it.cat||''}</span>
+        <div class="board-card-header">
+          <div class="board-card-tags">
+            <span class="tag">${it.team||''}</span>
+            <span class="tag">${it.cat||''}</span>
+          </div>
+          <button class="btn-delete-board" onclick="event.stopPropagation();deleteItem(${it.id})" title="삭제">🗑️</button>
         </div>
         <div class="board-card-req">${it.req||''}</div>
         <div class="board-card-meta">
@@ -3811,6 +3821,16 @@ function boardDrop(e, col) {
   if(!it || it.status===col) { _dragId=null; return; }
   it.status=col; markUnsaved(); renderBoard(); _dragId=null;
 }
+// ── DELETE ITEM ──
+function deleteItem(id) {
+  if (!confirm('이 항목을 삭제하시겠습니까?')) return;
+  const idx = ITEMS.findIndex(i => i.id === id);
+  if (idx < 0) return;
+  ITEMS.splice(idx, 1);
+  markUnsaved();
+  renderView();
+}
+
 // ── BOARD CARD INLINE EDITING ──
 function boardEditAssignee(id, spanEl) {
   if (spanEl.querySelector('input')) return;
