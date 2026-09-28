@@ -290,8 +290,6 @@ body {
 .board-meta-edit { cursor: pointer; border-radius: 5px; padding: 2px 5px; transition: background .15s; }
 .board-meta-edit:hover { background: var(--accent-light); color: var(--accent); }
 .board-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-.board-card-img { width: 100%; height: 120px; object-fit: cover; border-radius: 7px; margin-bottom: 7px; border: 1px solid var(--border); cursor: pointer; display: block; }
-.board-card-img-more { font-size: 10px; color: var(--text-3); text-align: right; margin-top: -4px; margin-bottom: 5px; }
 .btn-delete-board { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-3); padding: 0 2px; line-height: 1; border-radius: 4px; transition: color .15s, background .15s; opacity: 0; }
 .board-card:hover .btn-delete-board { opacity: 1; }
 .btn-delete-board:hover { color: #ff5a5a; background: rgba(255,90,90,.1); }
@@ -3750,7 +3748,7 @@ function closeLightbox() {
     const{data,error}=await _SB.from('feedback_store').select('items,imgs').eq('id','main').single();
     if(error)throw error;
     if(data&&data.items&&data.items.length>0){ITEMS=data.items;persistItems();}
-    if(data&&data.imgs&&typeof data.imgs==='object'){IMG_MAP=data.imgs;persistImgs();}
+    if(data&&data.imgs&&typeof data.imgs==='object'&&Object.keys(data.imgs).length>0){IMG_MAP={...IMG_MAP,...data.imgs};persistImgs();}
     renderView();
   }catch(e){console.warn('Supabase load failed:',e.message);}
 })()
@@ -3771,10 +3769,6 @@ function renderBoard() {
     const cards = colItems.map(it => {
       const assignee = it['담당자'] || '미지정';
       const dl = it.deadline || '-';
-      const boardImgs = IMG_MAP[String(it.id)] || [];
-      const boardImgHtml = boardImgs.length
-        ? `<img class="board-card-img" src="${boardImgs[0]}" onclick="event.stopPropagation();openLightbox(this.src)" title="클릭하면 크게 보기">${boardImgs.length > 1 ? `<div class="board-card-img-more">+${boardImgs.length - 1}장 더</div>` : ''}`
-        : '';
       return `<div class="board-card" draggable="true" data-id="${it.id}" ondragstart="boardDragStart(event,${it.id})" ondragend="boardDragEnd(event)" onclick="openDetail(${it.id})">
         <div class="board-card-header">
           <div class="board-card-tags">
@@ -3783,7 +3777,6 @@ function renderBoard() {
           </div>
           <button class="btn-delete-board" onclick="event.stopPropagation();deleteItem(${it.id})" title="삭제">🗑️</button>
         </div>
-        ${boardImgHtml}
         <div class="board-card-req">${it.req||''}</div>
         <div class="board-card-meta">
           <span class="board-meta-edit" onclick="event.stopPropagation();boardEditAssignee(${it.id},this)">👤 ${assignee}</span>
