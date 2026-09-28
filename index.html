@@ -3769,6 +3769,8 @@ function renderBoard() {
     const cards = colItems.map(it => {
       const assignee = it['담당자'] || '미지정';
       const dl = it.deadline || '-';
+      const boardImgs = IMG_MAP[String(it.id)] || [];
+      const boardImgHtml = boardImgs.length ? '<img class="board-card-img" src="' + boardImgs[0] + '" onclick="event.stopPropagation();openLightbox(this.src)" title="클릭하면 크게 보기">' + (boardImgs.length > 1 ? '<div class="board-card-img-more">+' + (boardImgs.length - 1) + '장 더</div>' : '') : '';
       return `<div class="board-card" draggable="true" data-id="${it.id}" ondragstart="boardDragStart(event,${it.id})" ondragend="boardDragEnd(event)" onclick="openDetail(${it.id})">
         <div class="board-card-header">
           <div class="board-card-tags">
@@ -3777,6 +3779,7 @@ function renderBoard() {
           </div>
           <button class="btn-delete-board" onclick="event.stopPropagation();deleteItem(${it.id})" title="삭제">🗑️</button>
         </div>
+        ${boardImgHtml}
         <div class="board-card-req">${it.req||''}</div>
         <div class="board-card-meta">
           <span class="board-meta-edit" onclick="event.stopPropagation();boardEditAssignee(${it.id},this)">👤 ${assignee}</span>
