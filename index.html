@@ -232,24 +232,50 @@ body {
 .main.board-mode { max-width: none; }
 
 /* BOARD VIEW */
+.board-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .board-wrap {
   display: flex;
   gap: 14px;
   padding: 4px 0 24px;
-  overflow-x: auto;
   align-items: flex-start;
-  -webkit-overflow-scrolling: touch;
+}
+.board-headers-bar {
+  position: sticky;
+  top: var(--filter-zone-h, 110px);
+  z-index: 20;
+  background: var(--bg);
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 0 0;
+}
+.board-headers-bar::-webkit-scrollbar { display: none; }
+.board-headers-bar .board-col-header {
+  flex: 0 0 260px;
+  min-width: 220px;
+  border-radius: 12px 12px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: 2px solid var(--bg);
+  background: var(--card-bg);
+  padding: 10px 14px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .board-col {
   flex: 0 0 260px;
   min-width: 220px;
-  border-radius: 12px;
+  border-radius: 0 0 12px 12px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 140px);
+  border-top: none;
 }
 .board-col-header {
   padding: 12px 14px 10px;
@@ -267,7 +293,7 @@ body {
   flex-shrink: 0;
 }
 .board-col-header .col-badge { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; min-width: 22px; text-align: center; }
-.board-col-body { padding: 8px; display: flex; flex-direction: column; gap: 7px; min-height: 60px; transition: background .15s, border-color .15s; overflow-y: auto; flex: 1; }
+.board-col-body { padding: 8px; display: flex; flex-direction: column; gap: 7px; min-height: 60px; transition: background .15s, border-color .15s; }
 .board-col-body.drag-over { background: var(--surface-2); border: 2px dashed var(--accent); border-radius: 8px; }
 .board-card.dragging { opacity: 0.35; pointer-events: none; }
 .board-card {
@@ -810,7 +836,9 @@ body {
 
   /* Board: narrower columns — show ~1.3 at once */
   .board-col { flex: 0 0 220px; min-width: 180px; }
+  .board-headers-bar .board-col-header { flex: 0 0 220px; min-width: 180px; }
   .board-wrap { gap: 10px; padding: 4px 0 20px; }
+  .board-headers-bar { gap: 10px; }
   .main.board-mode { padding-left: 12px; padding-right: 12px; }
 
   /* Touch targets */
@@ -949,7 +977,9 @@ body {
 @media (min-width: 1140px) {
   .board-wrap {
     justify-content: center;
-    overflow-x: visible;
+  }
+  .board-headers-bar {
+    justify-content: center;
   }
 }
 
@@ -989,7 +1019,9 @@ body {
   align-items: center;
   gap: 8px;
   min-height: 36px;
+  flex-wrap: wrap;
 }
+.filter-divider { color: var(--border); font-size: 16px; flex-shrink: 0; margin: 0 2px; }
 .filter-label {
   font-size: 11px;
   font-weight: 600;
@@ -1094,8 +1126,7 @@ body {
     <div class="filter-chip-row">
       <span class="filter-label">담당팀</span>
       <div class="chip-row" id="teamRow"><button class="chip active">전체</button><button class="chip">제품디자인팀</button><button class="chip">FC팀</button><button class="chip">SCM팀</button></div>
-    </div>
-    <div class="filter-chip-row">
+      <span class="filter-divider">|</span>
       <span class="filter-label">진행상황</span>
       <div class="chip-row" id="statusRow"><button class="chip active">전체</button><button class="chip ongoing">진행중</button><button class="chip review">검토중</button><button class="chip done">완료</button><button class="chip blocked">진행불가</button></div>
     </div>
@@ -3317,7 +3348,10 @@ body {
   </div>
 </div></div>
   <div id="tableView" class="table-wrap" style="display:none;"></div>
-  <div id="boardView" class="board-wrap" style="display:none;"></div>
+  <div id="boardHeadersBar" class="board-headers-bar" style="display:none;"></div>
+  <div id="boardScrollWrap" class="board-scroll-wrap" style="display:none;">
+    <div id="boardView" class="board-wrap"></div>
+  </div>
 </main>
 
 <div class="ref-section">
@@ -3442,22 +3476,25 @@ function renderView() {
   const cl = document.getElementById('cardList');
   const tv = document.getElementById('tableView');
   const bv = document.getElementById('boardView');
+  const bh = document.getElementById('boardHeadersBar');
+  const bsw = document.getElementById('boardScrollWrap');
+  const showBoard = d => { if (bh) bh.style.display = d; if (bsw) bsw.style.display = d; };
   if (viewMode === 'table') {
     if (cl) cl.style.display = 'none';
     if (tv) tv.style.display = '';
-    if (bv) bv.style.display = 'none';
+    showBoard('none');
     document.querySelector('.main')?.classList.remove('board-mode');
     renderTable();
   } else if (viewMode === 'board') {
     if (cl) cl.style.display = 'none';
     if (tv) tv.style.display = 'none';
-    if (bv) bv.style.display = '';
+    showBoard('');
     document.querySelector('.main')?.classList.add('board-mode');
     renderBoard();
   } else {
     if (cl) cl.style.display = '';
     if (tv) tv.style.display = 'none';
-    if (bv) bv.style.display = 'none';
+    showBoard('none');
     document.querySelector('.main')?.classList.remove('board-mode');
     renderCards();
   }
@@ -3775,20 +3812,34 @@ function renderBoard() {
   document.getElementById('resultCount').innerHTML = `<strong>${items.length}</strong>건 표시 중 (전체 ${ITEMS.length}건)`;
   updateStats();
   const bv = document.getElementById('boardView');
+  const bh = document.getElementById('boardHeadersBar');
+  const bsw = document.getElementById('boardScrollWrap');
   if (!bv) return;
+  const fz = document.querySelector('.filter-zone');
+  if (fz) document.documentElement.style.setProperty('--filter-zone-h', fz.offsetHeight + 'px');
   const COLS = [
     { key: '검토중', label: '검토중', cls: 'board-col-review' },
     { key: '진행중', label: '진행중', cls: 'board-col-ongoing' },
     { key: '완료',   label: '완료',   cls: 'board-col-done' },
     { key: '진행불가', label: '진행불가', cls: 'board-col-blocked' }
   ];
-  bv.innerHTML = COLS.map(col => {
-    const colItems = items.filter(it => it.status === col.key);
+  const colData = COLS.map(col => ({ col, colItems: items.filter(it => it.status === col.key) }));
+  if (bh) {
+    bh.innerHTML = colData.map(({ col, colItems }) =>
+      `<div class="board-col-header ${col.cls}">
+        <span>${col.label}</span>
+        <span class="col-badge">${colItems.length}</span>
+      </div>`
+    ).join('');
+  }
+  bv.innerHTML = colData.map(({ col, colItems }) => {
     const cards = colItems.map(it => {
       const assignee = it['담당자'] || '미지정';
       const dl = it.deadline || '-';
       const boardImgs = IMG_MAP[String(it.id)] || [];
-      const boardImgHtml = boardImgs.length ? '<img class="board-card-img" src="' + boardImgs[0] + '" onclick="event.stopPropagation();openLightbox(this.src)" title="클릭하면 크게 보기">' + (boardImgs.length > 1 ? '<div class="board-card-img-more">+' + (boardImgs.length - 1) + '장 더</div>' : '') : '';
+      const boardImgHtml = boardImgs.length
+        ? `<img class="board-card-img" src="${boardImgs[0]}" onclick="event.stopPropagation();openLightbox(this.src)" title="클릭하면 크게 보기">${boardImgs.length > 1 ? `<div class="board-card-img-more">+${boardImgs.length - 1}장 더</div>` : ''}`
+        : '';
       const boardAnsHtml = (it.ans && it.ans.trim())
         ? `<div class="board-card-ans board-ans-editable" onclick="event.stopPropagation();boardEditAns(${it.id},this)" title="클릭해서 댓글 수정"><span class="ans-icon">💬</span><span class="board-ans-text">${esc(it.ans)}</span></div>`
         : `<div class="board-card-ans board-ans-empty board-ans-editable" onclick="event.stopPropagation();boardEditAns(${it.id},this)" title="댓글 달기"><span class="ans-icon">💬</span><span class="board-ans-placeholder">댓글 달기...</span></div>`;
@@ -3810,13 +3861,13 @@ function renderBoard() {
       </div>`;
     }).join('');
     return `<div class="board-col ${col.cls}">
-      <div class="board-col-header">
-        <span>${col.label}</span>
-        <span class="col-badge">${colItems.length}</span>
-      </div>
       <div class="board-col-body" data-col="${col.key}" ondragover="boardDragOver(event)" ondragleave="boardDragLeave(event)" ondrop="boardDrop(event,'${col.key}')">${cards || '<div class="board-col-empty">항목 없음</div>'}</div>
     </div>`;
   }).join('');
+  if (bh && bsw && !bsw._scrollSynced) {
+    bsw._scrollSynced = true;
+    bsw.addEventListener('scroll', () => { bh.scrollLeft = bsw.scrollLeft; });
+  }
 }
 
 // ── BOARD DRAG & DROP ──
