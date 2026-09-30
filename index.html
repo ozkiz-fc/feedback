@@ -292,6 +292,8 @@ body {
 .board-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
 .board-card-img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; float: left; margin: 0 8px 4px 0; }
 .board-card-img-more { font-size: 10px; color: var(--text-3); clear: left; }
+.board-card-ans { display: flex; align-items: flex-start; gap: 5px; margin-top: 6px; padding: 5px 7px; background: var(--ans-bg); border-left: 2.5px solid var(--ans-border); border-radius: 0 5px 5px 0; }
+.board-ans-text { font-size: 11.5px; color: var(--ans-fg); line-height: 1.45; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .board-card { overflow: hidden; }
 .btn-delete-board { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-3); padding: 0 2px; line-height: 1; border-radius: 4px; transition: color .15s, background .15s; opacity: 0; }
 .board-card:hover .btn-delete-board { opacity: 1; }
@@ -3774,6 +3776,9 @@ function renderBoard() {
       const dl = it.deadline || '-';
       const boardImgs = IMG_MAP[String(it.id)] || [];
       const boardImgHtml = boardImgs.length ? '<img class="board-card-img" src="' + boardImgs[0] + '" onclick="event.stopPropagation();openLightbox(this.src)" title="클릭하면 크게 보기">' + (boardImgs.length > 1 ? '<div class="board-card-img-more">+' + (boardImgs.length - 1) + '장 더</div>' : '') : '';
+      const boardAnsHtml = (it.ans && it.ans.trim())
+        ? `<div class="board-card-ans"><span class="ans-icon">💬</span><span class="board-ans-text">${esc(it.ans)}</span></div>`
+        : '';
       return `<div class="board-card" draggable="true" data-id="${it.id}" ondragstart="boardDragStart(event,${it.id})" ondragend="boardDragEnd(event)" onclick="openDetail(${it.id})">
         <div class="board-card-header">
           <div class="board-card-tags">
@@ -3784,6 +3789,7 @@ function renderBoard() {
         </div>
         ${boardImgHtml}
         <div class="board-card-req">${it.req||''}</div>
+        ${boardAnsHtml}
         <div class="board-card-meta">
           <span class="board-meta-edit" onclick="event.stopPropagation();boardEditAssignee(${it.id},this)">👤 ${assignee}</span>
           <span class="board-meta-edit" onclick="event.stopPropagation();boardEditDl(${it.id},this)">📅 ${dl}</span>
